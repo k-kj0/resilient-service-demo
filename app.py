@@ -1,44 +1,22 @@
-import time
-import threading
-from flask import Flask, jsonify
 from datetime import datetime, timezone
+import time
 
-app = Flask(__name__)
-START_TIME = time.time()
-restart_count = 0
-incident_log = []
+START = time.time()
+restarts = 0
 
-def get_uptime():
-    return round(time.time() - START_TIME, 2)
+def handler(request):
+    from http.server import BaseHTTPRequestHandler
+    pass
 
-@app.route("/health")
-def health():
-    return jsonify({
+# Vercel serverless function
+def handler(request):
+    import json
+    data = {
         "status": "healthy",
-        "uptime_seconds": get_uptime(),
-        "restarts": restart_count,
+        "uptime_seconds": round(time.time() - START, 2),
+        "restarts": restarts,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "service": "resilient-demo"
-    })
-
-@app.route("/crash")
-def crash():
-    """Simulate a crash for demo purposes"""
-    incident_log.append({
-        "time": datetime.now(timezone.utc).isoformat(),
-        "event": "simulated crash triggered"
-    })
-    # In a real service, this would kill the process.
-    # Here we just log it and return, showing the watchdog concept.
-    return jsonify({"message": "Crash simulated and logged", "incidents": incident_log})
-
-@app.route("/incidents")
-def incidents():
-    return jsonify({"incidents": incident_log, "total": len(incident_log)})
-
-@app.route("/")
-def dashboard():
-    return open("dashboard.html").read()
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    }
+    from flask import Response
+    return Response(json.dumps(data), mimetype="application/json")
