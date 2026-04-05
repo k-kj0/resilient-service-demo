@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Service Status</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
+    h1 { font-size: 1.8rem; margin-bottom: 6px; }
+    .sub { color: #64748b; font-size: 0.85rem; margin-bottom: 36px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; width: 100%; max-width: 760px; }
+    .card { background: #1e2130; border-radius: 12px; padding: 22px; border: 1px solid #2d3148; }
+    .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 8px; }
+    .val { font-size: 1.9rem; font-weight: 700; color: #fff; }
+    .green { color: #4ade80; }
+    .red { color: #f87171; }
+    .pulse { display:inline-block;width:9px;height:9px;border-radius:50%;background:#4ade80;margin-right:8px;animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+    button { margin-top: 32px; padding: 12px 28px; background: #ef4444; border: none; border-radius: 8px; color: #fff; font-size: 1rem; cursor: pointer; border-radius: 8px; }
+    button:hover { background: #dc2626; }
+    .log { margin-top: 28px; width: 100%; max-width: 760px; background: #1e2130; border-radius: 12px; padding: 20px; border: 1px solid #2d3148; }
+    .log h2 { font-size: 0.85rem; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .entry { font-size: 0.78rem; font-family: monospace; color: #64748b; border-top: 1px solid #2d3148; padding: 5px 0; }
+  </style>
+</head>
+<body>
+  <h1><span class="pulse"></span>Service Status Dashboard</h1>
+  <p class="sub">resilient-demo · refreshes every 5s</p>
+  <div class="cards">
+    <div class="card"><div class="label">Status</div><div class="val green" id="status">—</div></div>
+    <div class="card"><div class="label">Uptime</div><div class="val" id="uptime">—</div></div>
+    <div class="card"><div class="label">Checked at</div><div class="val" id="ts" style="font-size:1rem">—</div></div>
+  </div>
+  <button onclick="triggerCrash()">🔴 Simulate Crash</button>
+  <div class="log">
+    <h2>Incident Log</h2>
+    <div id="log"></div>
+  </div>
+  <script>
+    let incidents = [];
+    async function refresh() {
+      try {
+        const h = await fetch("/api/health").then(r => r.json());
+        document.getElementById("status").textContent = h.status.toUpperCase();
+        document.getElementById("uptime").textContent = h.uptime_seconds + "s";
+        document.getElementById("ts").textContent = new Date(h.timestamp).toLocaleTimeString();
+      } catch(e) {
+        document.getElementById("status").textContent = "DOWN";
+        document.getElementById("status").className = "val red";
+      }
+    }
+    async function triggerCrash() {
+      const r = await fetch("/api/crash").then(r => r.json());
+      incidents.push("[" + new Date().toLocaleTimeString() + "] " + r.message);
+      document.getElementById("log").innerHTML = incidents.map(e => `<div class="entry">${e}</div>`).join("") || "<div class='entry'>No incidents.</div>";
+    }
+    refresh();
+    setInterval(refresh, 5000);
+  </script>
+</body>
+</html>
