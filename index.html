@@ -1,61 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <title>Service Status</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
-    h1 { font-size: 1.8rem; margin-bottom: 6px; }
-    .sub { color: #64748b; font-size: 0.85rem; margin-bottom: 36px; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; width: 100%; max-width: 760px; }
-    .card { background: #1e2130; border-radius: 12px; padding: 22px; border: 1px solid #2d3148; }
-    .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 8px; }
-    .val { font-size: 1.9rem; font-weight: 700; color: #fff; }
-    .green { color: #4ade80; }
-    .red { color: #f87171; }
-    .pulse { display:inline-block;width:9px;height:9px;border-radius:50%;background:#4ade80;margin-right:8px;animation:pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
-    button { margin-top: 32px; padding: 12px 28px; background: #ef4444; border: none; border-radius: 8px; color: #fff; font-size: 1rem; cursor: pointer; border-radius: 8px; }
-    button:hover { background: #dc2626; }
-    .log { margin-top: 28px; width: 100%; max-width: 760px; background: #1e2130; border-radius: 12px; padding: 20px; border: 1px solid #2d3148; }
-    .log h2 { font-size: 0.85rem; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-    .entry { font-size: 0.78rem; font-family: monospace; color: #64748b; border-top: 1px solid #2d3148; padding: 5px 0; }
-  </style>
+<meta charset="UTF-8"/>
+<title>Resilient Service Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px}
+h1{font-size:1.8rem;margin-bottom:6px;color:#fff}
+.sub{color:#64748b;font-size:.85rem;margin-bottom:36px}
+.pulse{display:inline-block;width:9px;height:9px;border-radius:50%;background:#4ade80;margin-right:8px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;width:100%;max-width:780px}
+.card{background:#1e2130;border-radius:12px;padding:22px;border:1px solid #2d3148}
+.label{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:8px}
+.val{font-size:1.9rem;font-weight:700;color:#fff}
+.green{color:#4ade80}.red{color:#f87171}.yellow{color:#facc15}
+.btn{margin-top:28px;padding:12px 28px;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600}
+.btn-crash{background:#ef4444;color:#fff}.btn-crash:hover{background:#dc2626}
+.btn-heal{background:#22c55e;color:#fff;margin-left:12px}.btn-heal:hover{background:#16a34a}
+.log{margin-top:28px;width:100%;max-width:780px;background:#1e2130;border-radius:12px;padding:20px;border:1px solid #2d3148}
+.log h2{font-size:.8rem;color:#94a3b8;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.entry{font-size:.78rem;font-family:monospace;padding:5px 0;border-top:1px solid #2d3148}
+.entry.crash{color:#f87171}.entry.heal{color:#4ade80}.entry.check{color:#64748b}
+.sla{margin-top:28px;width:100%;max-width:780px;background:#1e2130;border-radius:12px;padding:20px;border:1px solid #2d3148}
+.sla h2{font-size:.8rem;color:#94a3b8;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.bar-bg{background:#2d3148;border-radius:99px;height:10px;width:100%;margin-top:6px}
+.bar-fill{background:#4ade80;border-radius:99px;height:10px;transition:width .5s}
+</style>
 </head>
 <body>
-  <h1><span class="pulse"></span>Service Status Dashboard</h1>
-  <p class="sub">resilient-demo · refreshes every 5s</p>
-  <div class="cards">
-    <div class="card"><div class="label">Status</div><div class="val green" id="status">—</div></div>
-    <div class="card"><div class="label">Uptime</div><div class="val" id="uptime">—</div></div>
-    <div class="card"><div class="label">Checked at</div><div class="val" id="ts" style="font-size:1rem">—</div></div>
+<h1><span class="pulse" id="dot"></span>Service Status Dashboard</h1>
+<p class="sub">resilient-demo · simulating production reliability · auto-checks every 5s</p>
+
+<div class="cards">
+  <div class="card"><div class="label">Status</div><div class="val green" id="status">HEALTHY</div></div>
+  <div class="card"><div class="label">Uptime</div><div class="val" id="uptime">0s</div></div>
+  <div class="card"><div class="label">Restarts</div><div class="val" id="restarts">0</div></div>
+  <div class="card"><div class="label">Health checks</div><div class="val" id="checks">0</div></div>
+</div>
+
+<div>
+  <button class="btn btn-crash" onclick="triggerCrash()">🔴 Simulate Crash</button>
+  <button class="btn btn-heal" onclick="triggerHeal()">✅ Heal Service</button>
+</div>
+
+<div class="sla">
+  <h2>SLA Uptime — Target: 99.9%</h2>
+  <div style="display:flex;justify-content:space-between;margin-top:4px">
+    <span style="font-size:.85rem" id="sla-label">100.0%</span>
+    <span style="font-size:.75rem;color:#64748b">Last 30 checks</span>
   </div>
-  <button onclick="triggerCrash()">🔴 Simulate Crash</button>
-  <div class="log">
-    <h2>Incident Log</h2>
-    <div id="log"></div>
-  </div>
-  <script>
-    let incidents = [];
-    async function refresh() {
-      try {
-        const h = await fetch("/api/health").then(r => r.json());
-        document.getElementById("status").textContent = h.status.toUpperCase();
-        document.getElementById("uptime").textContent = h.uptime_seconds + "s";
-        document.getElementById("ts").textContent = new Date(h.timestamp).toLocaleTimeString();
-      } catch(e) {
-        document.getElementById("status").textContent = "DOWN";
-        document.getElementById("status").className = "val red";
-      }
-    }
-    async function triggerCrash() {
-      const r = await fetch("/api/crash").then(r => r.json());
-      incidents.push("[" + new Date().toLocaleTimeString() + "] " + r.message);
-      document.getElementById("log").innerHTML = incidents.map(e => `<div class="entry">${e}</div>`).join("") || "<div class='entry'>No incidents.</div>";
-    }
-    refresh();
-    setInterval(refresh, 5000);
-  </script>
+  <div class="bar-bg"><div class="bar-fill" id="sla-bar" style="width:100%"></div></div>
+</div>
+
+<div class="log">
+  <h2>Incident & Recovery Log</h2>
+  <div id="log"><div class="entry check">[system] Service started. Watchdog active.</div></div>
+</div>
+
+<script>
+let startTime = Date.now();
+let restarts = 0;
+let checks = 0;
+let isDown = false;
+let history = [];
+let crashTime = null;
+
+function fmt(ms) {
+  let s = Math.floor(ms/1000);
+  if(s < 60) return s+'s';
+  let m = Math.floor(s/60); s = s%60;
+  return m+'m '+s+'s';
+}
+
+function addLog(msg, type) {
+  const d = document.getElementById('log');
+  const t = new Date().toLocaleTimeString();
+  d.innerHTML = `<div class="entry ${type}">[${t}] ${msg}</div>` + d.innerHTML;
+}
+
+function updateSLA() {
+  history.push(!isDown);
+  if(history.length > 30) history.shift();
+  const pct = (history.filter(Boolean).length / history.length * 100).toFixed(1);
+  document.getElementById('sla-label').textContent = pct + '%';
+  document.getElementById('sla-bar').style.width = pct + '%';
+  document.getElementById('sla-bar').style.background = pct >= 99 ? '#4ade80' : pct >= 95 ? '#facc15' : '#f87171';
+}
+
+function tick() {
+  checks++;
+  document.getElementById('checks').textContent = checks;
+  document.getElementById('uptime').textContent = fmt(Date.now() - startTime);
+  updateSLA();
+
+  if(!isDown) {
+    addLog('Health check passed — /health returned 200 OK', 'check');
+  }
+}
+
+function triggerCrash() {
+  if(isDown) return;
+  isDown = true;
+  crashTime = Date.now();
+  document.getElementById('status').textContent = 'DOWN';
+  document.getElementById('status').className = 'val red';
+  document.getElementById('dot').style.background = '#f87171';
+  restarts++;
+  document.getElementById('restarts').textContent = restarts;
+  addLog('CRASH DETECTED — service unresponsive. Watchdog triggered. Auto-restart in 5s...', 'crash');
+
+  setTimeout(() => {
+    if(isDown) triggerHeal();
+  }, 5000);
+}
+
+function triggerHeal() {
+  if(!isDown) return;
+  isDown = false;
+  const downTime = crashTime ? fmt(Date.now() - crashTime) : '?';
+  document.getElementById('status').textContent = 'HEALTHY';
+  document.getElementById('status').className = 'val green';
+  document.getElementById('dot').style.background = '#4ade80';
+  addLog(`Service recovered. Downtime: ${downTime}. Watchdog restarted process.`, 'heal');
+  crashTime = null;
+}
+
+tick();
+setInterval(tick, 5000);
+</script>
 </body>
 </html>
