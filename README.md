@@ -1,24 +1,21 @@
-# Resilient Service Demo — MLH Production Engineering Hackathon
+# Resilient Service Demo
+**MLH Production Engineering Hackathon — Reliability Category**
 
-A production-grade reliability demo showing health checks, auto-restart, and live monitoring.
+A production-ready service demonstrating health checks, crash simulation, and live monitoring.
 
-## What it does
-- `/health` — JSON health endpoint with uptime & restart count
-- `/crash` — Simulates a crash and logs the incident
-- `/incidents` — Incident log
-- `/` — Live status dashboard (auto-refreshes every 5s)
-- `watchdog.py` — Auto-restarts the service if it crashes
+## Live Demo
+[View Dashboard](https://your-vercel-url.vercel.app)
 
-## How to run (Replit — no install needed)
-1. Fork this repo into [Replit](https://replit.com)
-2. Click **Run**
-3. Open the web preview — you'll see the live dashboard
+## Endpoints
+- `GET /` — Live status dashboard
+- `GET /api/health` — JSON health check (uptime, status, timestamp)
+- `GET /api/crash` — Simulates a crash and logs the incident
 
-## Reliability concepts demonstrated
-- Health checks (liveness probe pattern)
-- Auto-restart / watchdog process (like `--restart=always` in Docker)
+## Concepts demonstrated
+- Health check / liveness probe pattern
 - Incident logging and observability
-- Zero-downtime design goal
+- Auto-refresh monitoring dashboard
+- Serverless resilient architecture
 
-## Tech stack
-Python · Flask · Vanilla JS
+## Stack
+Python (Vercel serverless) · Vanilla JS · HTML/CSS
